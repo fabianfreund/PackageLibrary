@@ -1,6 +1,6 @@
 {
     "name": "com.realx.packagelibrary",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "displayName": "Package Library",
     "description": "A Unity Editor tool to manage, version, and share assets across projects using a shared library structure.",
     "unity": "2023.2",
@@ -21,6 +21,16 @@
     "type": "tool",
     "changelog": [
       {
+        "version": "1.0.3",
+        "date": "2025-04-16",
+        "changes": [
+          "Added import tracking system (RxImportStatus) to detect imported and outdated assets",
+          "UI now displays icons for imported and outdated versions without disrupting layout",
+          "Prevented exporting duplicate version files by checking for existing file",
+          "Refined asset card layout and icon placement"
+        ]
+      },
+      {
         "version": "1.0.2",
         "date": "2025-04-16",
         "changes": [
@@ -33,3 +43,4 @@
       }
     ]
   }
+  

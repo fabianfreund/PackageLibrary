@@ -68,6 +68,13 @@ public class RxAssetLibraryExportHelper : EditorWindow
 
         string fileBase = $"{name}_v{version}";
         string packagePath = Path.Combine(assetDir, fileBase + ".unitypackage");
+
+        if (File.Exists(packagePath))
+        {
+            EditorUtility.DisplayDialog("Version Exists", $"A version with this name already exists in the library:\n{name} v{version}\n\nPlease choose a different version or name.", "OK");
+            return;
+        }
+
         string jsonPath = Path.Combine(assetDir, fileBase + ".json");
         string thumbnailPath = Path.Combine(assetDir, fileBase + "_thumbnail.png");
 

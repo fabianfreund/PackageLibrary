@@ -112,6 +112,7 @@ public static class RxAssetLibraryTabs
             {
                 var versions = group.OrderByDescending(v => v.version).ToList();
                 var latest = versions.First();
+                string importedVersion = RxImportStatus.GetImportedVersion(group.Key);
 
                 EditorGUILayout.BeginVertical("box");
                 EditorGUILayout.BeginHorizontal();
@@ -144,6 +145,7 @@ public static class RxAssetLibraryTabs
                 EditorGUILayout.LabelField(group.Key, EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("Tags: " + string.Join(", ", latest.tags), EditorStyles.miniLabel);
 
+                // inside the version loop in DrawLibraryTab()
                 foreach (var version in versions)
                 {
                     if (string.IsNullOrEmpty(version.version)) continue;
@@ -157,6 +159,8 @@ public static class RxAssetLibraryTabs
                         string fileBase = $"{version.name}_v{version.version}";
                         string packagePath = Path.Combine(basePath, fileBase + ".unitypackage");
                         AssetDatabase.ImportPackage(packagePath, true);
+
+                        RxImportStatus.SetImported(version.name, version.version);
                     }
 
                     if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("TreeEditor.Trash").image, "Delete Version"), GUILayout.Width(24), GUILayout.Height(24)))
@@ -175,8 +179,18 @@ public static class RxAssetLibraryTabs
                         EditorApplication.delayCall += RefreshAssetList;
                     }
 
+                    if (importedVersion == version.version)
+                    {
+                        GUILayout.Label(new GUIContent(EditorGUIUtility.IconContent("TestPassed").image, "Imported"), GUILayout.Width(18), GUILayout.Height(18));
+                    }
+                    else if (!string.IsNullOrEmpty(importedVersion) && version == versions.First())
+                    {
+                        GUILayout.Label(new GUIContent(EditorGUIUtility.IconContent("console.warnicon").image, "Outdated"), GUILayout.Width(18), GUILayout.Height(18));
+                    }
+
                     EditorGUILayout.EndHorizontal();
                 }
+
                 EditorGUILayout.EndVertical();
 
                 EditorGUILayout.BeginVertical(GUILayout.Width(80));
@@ -196,6 +210,7 @@ public static class RxAssetLibraryTabs
 
         EditorGUILayout.EndScrollView();
     }
+
 
     public static void DrawNewAssetTab()
     {
