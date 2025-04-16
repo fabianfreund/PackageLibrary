@@ -1,0 +1,22 @@
+{
+    "name": "com.realx.packagelibrary",
+    "version": "1.0.0",
+    "displayName": "Package Library",
+    "description": "A Unity Editor tool to manage, version, and share assets across projects using a shared library structure.",
+    "unity": "2023.2",
+    "author": {
+      "name": "RealX",
+      "email": "f.freund@the-realx.com",
+      "url": "https://the-realx.com.com"
+    },
+    "keywords": [
+      "asset",
+      "library",
+      "unitypackage",
+      "editor",
+      "realx",
+      "tool",
+      "rxassetlibrary"
+    ],
+    "type": "tool"
+  }
