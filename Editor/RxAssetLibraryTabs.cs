@@ -25,10 +25,10 @@ public static class RxAssetLibraryTabs
     private enum Tab { Browse, NewAsset, Settings }
     private static Tab currentTab = Tab.Browse;
 
-    [MenuItem("Tools/RxAssetLibrary/Asset Library")]
+    [MenuItem("Tools/RealX/Package Library")]
     public static void ShowWindow()
     {
-        var window = EditorWindow.GetWindow<AssetLibraryInternalWindow>("Rx Asset Library");
+        var window = EditorWindow.GetWindow<AssetLibraryInternalWindow>("Package Library");
         window.minSize = new Vector2(600, 400);
         RefreshAssetList();
     }

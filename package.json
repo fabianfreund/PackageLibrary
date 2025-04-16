@@ -1,6 +1,6 @@
 {
     "name": "com.realx.packagelibrary",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "displayName": "Package Library",
     "description": "A Unity Editor tool to manage, version, and share assets across projects using a shared library structure.",
     "unity": "2023.2",
