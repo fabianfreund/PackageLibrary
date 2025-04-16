@@ -13,17 +13,17 @@ public class RxAssetLibraryExportHelper : EditorWindow
     private string tags = "";
     private string version = "1.0.0";
     private bool includePackages = false;
+    private string customExportPath = "";
 
-    public static string libraryPath = "/Users/fabianfreund/Library/CloudStorage/OneDrive-RealX/02 - Documents - Development/01 - Projects/barXR/PackageLibrary 2";
-
-    public static void ShowUploadWindowWithDefaults(RxAssetLibraryTabs.RxAssetMetadata existing)
+    public static void ShowUploadWindowWithDefaults(RxAssetLibraryTabs.RxAssetMetadata existing, string targetLibraryPath)
     {
         var window = CreateInstance<RxAssetLibraryExportHelper>();
         window.assetName = existing.name;
         window.category = existing.category;
         window.tags = string.Join(", ", existing.tags);
-        window.version = RxAssetLibraryExportHelper.NextVersion(existing.version);
+        window.version = NextVersion(existing.version);
         window.includePackages = false;
+        window.customExportPath = targetLibraryPath;
 
         if (!string.IsNullOrEmpty(existing.originalAsset))
         {
@@ -45,14 +45,16 @@ public class RxAssetLibraryExportHelper : EditorWindow
         version = EditorGUILayout.TextField("Version", version);
         includePackages = EditorGUILayout.Toggle("Include Package Dependencies", includePackages);
 
+        EditorGUILayout.LabelField("Export Path:", customExportPath, EditorStyles.miniLabel);
+
         if (GUILayout.Button("Export"))
         {
-            ExportAsset(assetToExport, assetName, category, tags, version, includePackages);
+            ExportAsset(assetToExport, assetName, category, tags, version, includePackages, customExportPath);
             Close();
         }
     }
 
-    public static void ExportAsset(UnityEngine.Object asset, string name, string category, string tagsCsv, string version, bool includePackages = false)
+    public static void ExportAsset(UnityEngine.Object asset, string name, string category, string tagsCsv, string version, bool includePackages = false, string exportRootPath = null)
     {
         if (asset == null || string.IsNullOrEmpty(name)) return;
 
@@ -60,7 +62,8 @@ public class RxAssetLibraryExportHelper : EditorWindow
         if (!includePackages)
             mainDeps = mainDeps.Where(path => !path.StartsWith("Packages/")).ToArray();
 
-        string assetDir = Path.Combine(libraryPath, name);
+        string targetPath = exportRootPath ?? RxAssetLibraryTabs.libraryPath;
+        string assetDir = Path.Combine(targetPath, name);
         if (!Directory.Exists(assetDir)) Directory.CreateDirectory(assetDir);
 
         string fileBase = $"{name}_v{version}";

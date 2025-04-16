@@ -1,13 +1,13 @@
 {
     "name": "com.realx.packagelibrary",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "displayName": "Package Library",
     "description": "A Unity Editor tool to manage, version, and share assets across projects using a shared library structure.",
     "unity": "2023.2",
     "author": {
       "name": "RealX",
       "email": "f.freund@the-realx.com",
-      "url": "https://the-realx.com.com"
+      "url": "https://the-realx.com"
     },
     "keywords": [
       "asset",
@@ -18,5 +18,18 @@
       "tool",
       "rxassetlibrary"
     ],
-    "type": "tool"
+    "type": "tool",
+    "changelog": [
+      {
+        "version": "1.0.2",
+        "date": "2025-04-16",
+        "changes": [
+          "Added support for multiple named library paths",
+          "Library selection available in both Browse and New Asset tabs",
+          "Exporting assets now respects selected library path",
+          "Improved UI with thumbnails, grouped cards, and compact icons",
+          "Bug fixes for asset deletion and dynamic refresh"
+        ]
+      }
+    ]
   }

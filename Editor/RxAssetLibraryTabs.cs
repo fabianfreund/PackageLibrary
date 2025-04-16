@@ -12,9 +12,12 @@ public static class RxAssetLibraryTabs
     private static Dictionary<string, List<RxAssetMetadata>> groupedAssets = new Dictionary<string, List<RxAssetMetadata>>();
     private static HashSet<string> brokenAssetFolders = new HashSet<string>();
 
-    private static string customLibraryPathKey = "RxAssetLibraryPath";
-    public static string libraryPath => EditorPrefs.GetString(customLibraryPathKey, DefaultPath);
-    private static string DefaultPath => "/Users/fabianfreund/Library/CloudStorage/OneDrive-RealX/02 - Documents - Development/01 - Projects/barXR/PackageLibrary 2";
+    private static string libraryListKey = "RxAssetLibraryEntries";
+    private static string activeLibraryIndexKey = "RxAssetLibraryActiveIndex";
+    private static List<RxLibraryEntry> _libraries;
+    private static List<RxLibraryEntry> libraries => _libraries ??= LoadLibraries();
+
+    public static string libraryPath => GetActiveLibrary()?.path;
 
     private static UnityEngine.Object newAsset;
     private static string newCategory = "";
@@ -60,9 +63,27 @@ public static class RxAssetLibraryTabs
         }
     }
 
+    public static RxLibraryEntry GetActiveLibrary()
+    {
+        int index = EditorPrefs.GetInt(activeLibraryIndexKey, 0);
+        if (index >= 0 && index < libraries.Count)
+            return libraries[index];
+        return libraries.FirstOrDefault();
+    }
+
     public static void DrawLibraryTab()
     {
         GUILayout.Label("Browse Asset Library", EditorStyles.boldLabel);
+
+        int activeIndex = EditorPrefs.GetInt(activeLibraryIndexKey, 0);
+        var names = libraries.Select(l => l.name).ToArray();
+        int newIndex = EditorGUILayout.Popup("Library", activeIndex, names);
+        if (newIndex != activeIndex)
+        {
+            EditorPrefs.SetInt(activeLibraryIndexKey, newIndex);
+            RefreshAssetList();
+        }
+
         searchQuery = EditorGUILayout.TextField("Search", searchQuery);
 
         if (GUILayout.Button("Refresh", GUILayout.Width(100)))
@@ -138,6 +159,22 @@ public static class RxAssetLibraryTabs
                         AssetDatabase.ImportPackage(packagePath, true);
                     }
 
+                    if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("TreeEditor.Trash").image, "Delete Version"), GUILayout.Width(24), GUILayout.Height(24)))
+                    {
+                        string folder = Path.Combine(libraryPath, version.name);
+                        string baseFile = $"{version.name}_v{version.version}";
+                        string packagePath = Path.Combine(folder, baseFile + ".unitypackage");
+                        string jsonPath = Path.Combine(folder, baseFile + ".json");
+                        string thumbnailPath = Path.Combine(folder, baseFile + "_preview.png");
+
+                        if (File.Exists(packagePath)) File.Delete(packagePath);
+                        if (File.Exists(jsonPath)) File.Delete(jsonPath);
+                        if (File.Exists(thumbnailPath)) File.Delete(thumbnailPath);
+
+                        AssetDatabase.Refresh();
+                        EditorApplication.delayCall += RefreshAssetList;
+                    }
+
                     EditorGUILayout.EndHorizontal();
                 }
                 EditorGUILayout.EndVertical();
@@ -146,7 +183,7 @@ public static class RxAssetLibraryTabs
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("d_Toolbar Plus").image, "Upload New Version"), GUILayout.Width(24), GUILayout.Height(24)))
                 {
-                    RxAssetLibraryExportHelper.ShowUploadWindowWithDefaults(latest);
+                    RxAssetLibraryExportHelper.ShowUploadWindowWithDefaults(latest, libraryPath);
                 }
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.EndVertical();
@@ -163,6 +200,15 @@ public static class RxAssetLibraryTabs
     public static void DrawNewAssetTab()
     {
         GUILayout.Label("Create New Asset", EditorStyles.boldLabel);
+
+        int activeIndex = EditorPrefs.GetInt(activeLibraryIndexKey, 0);
+        var names = libraries.Select(l => l.name).ToArray();
+        int newIndex = EditorGUILayout.Popup("Library", activeIndex, names);
+        if (newIndex != activeIndex)
+        {
+            EditorPrefs.SetInt(activeLibraryIndexKey, newIndex);
+            RefreshAssetList();
+        }
 
         newAsset = EditorGUILayout.ObjectField("Select Asset", newAsset, typeof(UnityEngine.Object), false);
         if (newAsset == null) return;
@@ -190,7 +236,7 @@ public static class RxAssetLibraryTabs
         if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("d_CloudConnect").image, "Export as v1.0.0"), GUILayout.Width(160)))
         {
             string categoryToUse = useCustomCategory ? customCategory : newCategory;
-            RxAssetLibraryExportHelper.ExportAsset(newAsset, assetName, categoryToUse, newTags, "1.0.0");
+            RxAssetLibraryExportHelper.ExportAsset(newAsset, assetName, categoryToUse, newTags, "1.0.0", false, libraryPath);
             EditorApplication.delayCall += RefreshAssetList;
         }
     }
@@ -199,23 +245,39 @@ public static class RxAssetLibraryTabs
     {
         GUILayout.Label("Library Settings", EditorStyles.boldLabel);
 
-        EditorGUILayout.LabelField("Current Path:", EditorStyles.miniLabel);
-        EditorGUILayout.SelectableLabel(libraryPath, EditorStyles.textField, GUILayout.Height(18));
+        GUILayout.Space(10);
+        GUILayout.Label("Manage Libraries", EditorStyles.boldLabel);
 
-        if (GUILayout.Button("Change Path...", GUILayout.Width(160)))
+        for (int i = 0; i < libraries.Count; i++)
         {
-            string selected = EditorUtility.OpenFolderPanel("Select Library Directory", libraryPath, "");
-            if (!string.IsNullOrEmpty(selected))
+            var entry = libraries[i];
+            EditorGUILayout.BeginHorizontal();
+            entry.name = EditorGUILayout.TextField(entry.name, GUILayout.Width(150));
+            EditorGUILayout.SelectableLabel(entry.path, EditorStyles.textField, GUILayout.Height(18));
+
+            if (GUILayout.Button("🗑", GUILayout.Width(25)))
             {
-                EditorPrefs.SetString(customLibraryPathKey, selected);
+                libraries.RemoveAt(i);
+                SaveLibraries(libraries);
+                if (EditorPrefs.GetInt(activeLibraryIndexKey, 0) >= libraries.Count)
+                    EditorPrefs.SetInt(activeLibraryIndexKey, Mathf.Max(0, libraries.Count - 1));
                 RefreshAssetList();
+                return;
             }
+
+            EditorGUILayout.EndHorizontal();
         }
 
-        if (GUILayout.Button("Reset to Default", GUILayout.Width(160)))
+        GUILayout.Space(10);
+        if (GUILayout.Button("➕ Add New Library"))
         {
-            EditorPrefs.DeleteKey(customLibraryPathKey);
-            RefreshAssetList();
+            string newPath = EditorUtility.OpenFolderPanel("Select Library Folder", "", "");
+            if (!string.IsNullOrEmpty(newPath))
+            {
+                string name = Path.GetFileName(newPath);
+                libraries.Add(new RxLibraryEntry { name = name, path = newPath });
+                SaveLibraries(libraries);
+            }
         }
     }
 
@@ -275,5 +337,43 @@ public static class RxAssetLibraryTabs
         public string originalAsset;
         public string exportedAt;
         public string thumbnailFile;
+    }
+
+    [Serializable]
+    public class RxLibraryEntry
+    {
+        public string name;
+        public string path;
+    }
+
+    private class Wrapper
+    {
+        public List<RxLibraryEntry> entries;
+    }
+
+    private static List<RxLibraryEntry> LoadLibraries()
+    {
+        if (!EditorPrefs.HasKey(libraryListKey))
+        {
+            var defaultLib = new RxLibraryEntry
+            {
+                name = "Default",
+                path = "/Users/fabianfreund/Library/CloudStorage/OneDrive-RealX/02 - Documents - Development/01 - Projects/barXR/PackageLibrary 2"
+            };
+            var list = new List<RxLibraryEntry> { defaultLib };
+            SaveLibraries(list);
+            return list;
+        }
+
+        string json = EditorPrefs.GetString(libraryListKey);
+        return JsonUtility.FromJson<Wrapper>(json)?.entries ?? new List<RxLibraryEntry>();
+    }
+
+    private static void SaveLibraries(List<RxLibraryEntry> entries)
+    {
+        var wrapper = new Wrapper { entries = entries };
+        string json = JsonUtility.ToJson(wrapper);
+        EditorPrefs.SetString(libraryListKey, json);
+        _libraries = entries;
     }
 }
