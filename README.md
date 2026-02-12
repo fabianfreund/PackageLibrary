@@ -6,8 +6,6 @@ Welcome to the **PackageLibrary**! This Unity package library is designed to emp
 - [Introduction](#introduction)
 - [Getting Started](#getting-started)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Features](#features)
 
 
 ## Introduction
@@ -24,21 +22,3 @@ You can install the **PackageLibrary** using the Unity Package Manager. Simply a
 }
 ```
 
-## Usage
-After installing the package, you can start using the functionalities provided by the various packages within **PackageLibrary**. Here's an example of how to use a sample package:
-```csharp
-using FabianFreund.PackageLibrary;
-
-public class Example : MonoBehaviour
-{
-    void Start()
-    {
-        PackageFunctionality.DoSomething();
-    }
-}
-```
-
-## Features
-- **Modular Design**: Each package serves a specific purpose, making it easy to pick and choose the functionalities you need.
-- **Performance Optimized**: Packages are built with performance in mind to ensure efficiency in your projects.
-- **Comprehensive Documentation**: Each package comes with detailed documentation for easier implementation.
